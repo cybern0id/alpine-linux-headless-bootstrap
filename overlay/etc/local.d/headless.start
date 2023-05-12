@@ -1,25 +1,18 @@
 #!/bin/sh
 
-VERSION="0.6"
+VERSION="0.6-rugjam"
 
 # Redirect stdout and errors to console as rc.local does not log anything
 exec 1>/dev/console 2>&1
 
-logger -st ${0##*/} "Alpine Linux headless bootstrap v$VERSION by macmpi"
+logger -st ${0##*/} "Alpine Linux headless bootstrap v$VERSION by macmpi. Adjusted for rugjam by cybern0id."
 
 mkdir /tmp/.trash
 ovlpath=$( find /media -type d -path '*/.*' -prune -o -type f -name *.apkovl.tar.gz -exec dirname {} \; | head -1 )
 
+${ovlpath}/rpi0-libcomposite.sh
 
 ## Setup Network interfaces
-if [ -f "${ovlpath}/wpa_supplicant.conf" ]; then
-	logger -st ${0##*/} "Wifi setup found !"
-	apk add wpa_supplicant
-	cp "${ovlpath}/wpa_supplicant.conf" /etc/wpa_supplicant/wpa_supplicant.conf
-else
-	logger -st ${0##*/} "Wifi setup not found !"
-fi
-
 if ! cp "${ovlpath}/interfaces" /etc/network/interfaces; then
 	# set default interfaces if not specified by interface file on boot storage
 	logger -st ${0##*/} "No interfaces file supplied, building default interfaces..."
@@ -69,12 +62,10 @@ fi
 echo "Using following network interfaces:"
 cat /etc/network/interfaces
 
-echo "alpine-headless" > /etc/hostname
+echo "rugjam" > /etc/hostname
 hostname -F /etc/hostname
 
-grep -q "wlan" /etc/network/interfaces && [ -f /etc/wpa_supplicant/wpa_supplicant.conf ] && rc-service wpa_supplicant start
 rc-service networking start
-
 
 ## Setup temporary SSH server (root login, no password)
 ## we use some bundled keys to avoid generation at boot and save time
@@ -128,4 +119,3 @@ cat <<-EOF > /tmp/.trash/post-cleanup
 
 chmod +x /tmp/.trash/post-cleanup
 exec /tmp/.trash/post-cleanup
-
